@@ -1,4 +1,4 @@
-var socket = io();
+var socket = io('/webFS');
 
 language='fr';
 var languageDictionary = {
@@ -20,10 +20,14 @@ window.addEventListener('load', event => {
   changeDirectory(pathB.value);
 });
 
+socket.on('fileList', list => {
+  console.log(list);
+});
+
 function changeDirectory(path) {
   let pathB = document.getElementById('path');
   pathB.value = path;
-  var files = getFiles(path);
+  var files = getFileslist(path);
   updateFiles(files, properties);
 }
 
@@ -55,7 +59,9 @@ function updateProperties(properties){
   });
 }
 
-function getFiles(path){
+function getFileslist(path){
+  socket.emit('fileList', path);
+
   return [
     {name: "2017_1erS", type: "directory", size: 0},
     {name: "2019_Info-Spe", type: "directory", size: 0},

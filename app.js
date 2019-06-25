@@ -7,17 +7,20 @@ const socketIo = require('socket.io');
 
 
 
-
-
-var app = require('express')();
+var app = express();
 var server = http.createServer(app);
-var io = socketIo(http);
+var io = socketIo.listen(server);
+
+app.use(express.static('./client'));
 
 
-app.use(express.static('client'));
-
-io.on('connection', function(socket){
-  console.log('a user connected');
+io.of('/webFS').on('connection', function(socket){
+  socket.on('fileList', msg => {
+    getFilesList(path.join(homeDirectory, msg), list => {
+      socket.emit('fileList', list)
+    });
+    
+  });
 });
 
 server.listen(3000, function(){
@@ -39,6 +42,10 @@ getFilesList(homeDirectory, files=> {
 
 
 function getFilesList(directoryPath, callback) {
+  fs.exists(directoryPath, rsp => {
+    console.log(rsp, directoryPath);
+  });
+  
   fs.readdir(directoryPath, function (err, files) {
     let result = [];
     if (err) {
