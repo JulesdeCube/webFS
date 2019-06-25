@@ -4,7 +4,8 @@
   "description": "An open source personal web file server ",
   "main": "app.js",
   "scripts": {
-    "test": "node ."
+    "test": "node .",
+    "run": "node ."
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,7 @@
   },
   "homepage": "https://github.com/JulesdeCube/webFS#readme",
   "dependencies": {
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "socket.io": "^2.2.0"
   }
 }

@@ -2,18 +2,39 @@
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
+const express = require('express');
+const socketIo = require('socket.io');
 
-server = http.createServer();
+
+
+
+
+var app = require('express')();
+var server = http.createServer(app);
+var io = socketIo(http);
+
+
+app.use(express.static('client'));
+
+io.on('connection', function(socket){
+  console.log('a user connected');
+});
+
+server.listen(3000, function(){
+  console.log('listening on *:3000');
+});
+
+
+
+
+
 
 
 const homeDirectory = path.join(__dirname, 'Documents');
 
-console.log(homeDirectory);
-
 
 getFilesList(homeDirectory, files=> {
   console.log(files);
-
 });
 
 

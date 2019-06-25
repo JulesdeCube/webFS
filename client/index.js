@@ -1,3 +1,4 @@
+var socket = io();
 
 language='fr';
 var languageDictionary = {
