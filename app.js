@@ -5,7 +5,8 @@ const fs = require('fs');
 const express = require('express');
 const socketIo = require('socket.io');
 
-
+const port = 3000;
+const homeDirectory = path.join(__dirname, 'Documents');
 
 var app = express();
 var server = http.createServer(app);
@@ -16,58 +17,55 @@ app.use(express.static('./client'));
 
 io.of('/webFS').on('connection', function(socket){
   socket.on('fileList', msg => {
-    getFilesList(path.join(homeDirectory, msg), list => {
+    getFilesList(msg, list => {
       socket.emit('fileList', list)
     });
     
   });
 });
 
-server.listen(3000, function(){
-  console.log('listening on *:3000');
+server.listen(port, function(){
+  console.log('listening on port: ', port);
 });
 
 
 
 
-
-
-
-const homeDirectory = path.join(__dirname, 'Documents');
-
-
-getFilesList(homeDirectory, files=> {
-  console.log(files);
-});
-
+function pathSterilisateur(thepath) {
+  return path.join(homeDirectory, thepath);
+}
 
 function getFilesList(directoryPath, callback) {
-  fs.exists(directoryPath, rsp => {
-    console.log(rsp, directoryPath);
-  });
-  
-  fs.readdir(directoryPath, function (err, files) {
-    let result = [];
-    if (err) {
-      return console.log('Unable to scan directory: ' + err);
+  realPath = pathSterilisateur(directoryPath);
+  fs.exists(realPath, rsp => {
+  console.log('thepath', directoryPath, '(',  realPath,') exist :',rsp);
+    if (rsp) {
+      fs.readdir(realPath, function (err, files) {
+        let result = [];
+        if (err) {
+          return console.log('Unable to scan directory: ' + err);
+        }
+        files.forEach(file => {
+          let filePath = path.join(realPath, file);
+          let fileStats = fs.lstatSync(filePath);
+          let type;
+          
+          switch (true) {
+            case fileStats.isFile():            type = 'file';            break;
+            case fileStats.isDirectory():       type = 'directory';       break;
+            case fileStats.isBlockDevice():     type = 'blockDevice';     break;
+            case fileStats.isCharacterDevice(): type = 'characterDevice'; break;
+            case fileStats.isSymbolicLink():    type = 'symbolicLink';    break;
+            case fileStats.isFIFO():            type = 'FIFO';            break;
+            case fileStats.isSocket():          type = 'socket';          break;
+            default: type = 'undefined'; break;
+          }
+          result.push({name:file, type, size: fileStats.size});
+        });
+        callback({result, _metadata: {call:directoryPath, date: (new Date()).toISOString()}})
+      });
+    } else {
+      //console.log('ERROR(unkwon):',directoryPath);
     }
-    files.forEach(file => {
-      let filePath = path.join(directoryPath, file);
-      let fileStats = fs.lstatSync(filePath);
-      let type;
-      
-      switch (true) {
-        case fileStats.isFile():            type = 'file';            break;
-        case fileStats.isDirectory():       type = 'directory';       break;
-        case fileStats.isBlockDevice():     type = 'blockDevice';     break;
-        case fileStats.isCharacterDevice(): type = 'characterDevice'; break;
-        case fileStats.isSymbolicLink():    type = 'symbolicLink';    break;
-        case fileStats.isFIFO():            type = 'FIFO';            break;
-        case fileStats.isSocket():          type = 'socket';          break;
-        default: type = 'undefined'; break;
-      }
-      result.push({name:file, type, size: fileStats.size});
-    });
-    callback({result, _metadata: {call:directoryPath, date: (new Date()).toISOString()}})
   });
 }

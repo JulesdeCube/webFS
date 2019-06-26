@@ -13,20 +13,25 @@ var properties = ['name', 'type', 'size'];
 window.addEventListener('load', event => {
   pathB = document.getElementById('path');
   pathB.addEventListener('change', event => {
-    console.log('test');
-  
     changeDirectory(pathB.value);
   });
   changeDirectory(pathB.value);
 });
 
 socket.on('fileList', list => {
-  console.log(list);
+  console.log(list._metadata.call,list.result);
 });
+var documents = undefined;
 
 function changeDirectory(path) {
   let pathB = document.getElementById('path');
   pathB.value = path;
+  console.log();
+  splitPath = path.split(RegExp('\\\\|/'));
+  curentPath
+  splitPath.forEach(folder => {
+    if
+  });
   var files = getFileslist(path);
   updateFiles(files, properties);
 }
