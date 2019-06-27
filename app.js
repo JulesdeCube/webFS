@@ -25,7 +25,7 @@ io.of('/webFS').on('connection', function(socket){
 });
 
 server.listen(port, function(){
-  console.log('listening on port: ', port);
+  console.log('listening on http://127.0.0.1:' + port);
 });
 
 

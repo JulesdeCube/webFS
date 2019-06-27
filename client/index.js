@@ -1,81 +1,107 @@
 var socket = io('/webFS');
+var goaldPath = pathPath('/');
+var currentPath = pathPath('');
 
-language='fr';
-var languageDictionary = {
-  fr: {
-    name:'nom',
-    size:'taille',
-    type:'type'
+var tree = {
+  '2019_Info-Spe': { name: '2019_Info-Spe', 
+    'projet 1': { name: 'projet 1',
+/*       'folder0.1':{name: 'folder0.1' }, */
+      'style.css': {name: 'style.css'}
+    }
   }
 };
-var properties = ['name', 'type', 'size'];
 
 window.addEventListener('load', event => {
   pathB = document.getElementById('path');
   pathB.addEventListener('change', event => {
-    changeDirectory(pathB.value);
+    goaldPath = pathB.value;
+    updatePath();
   });
-  changeDirectory(pathB.value);
+
 });
 
 socket.on('fileList', list => {
   console.log(list._metadata.call,list.result);
 });
-var documents = undefined;
-
-function changeDirectory(path) {
-  let pathB = document.getElementById('path');
-  pathB.value = path;
-  console.log();
-  splitPath = path.split(RegExp('\\\\|/'));
-  curentPath
-  splitPath.forEach(folder => {
-    if
-  });
-  var files = getFileslist(path);
-  updateFiles(files, properties);
+i = 0;
+function updatePath() {
+  i++;
+  console.log(goaldPath , currentPath);
+  
+  if (stringifyPath(goaldPath) !== stringifyPath(currentPath) && i < 7) {
+    let level = currentPath.length;
+    let afterRemainingPath = [...goaldPath];
+    let nextPath = afterRemainingPath.splice(0, level + 1);
+   /*  console.log('goaldPath: ',stringifyPath(goaldPath));
+    console.log('afterRemainingPath: ', stringifyPath(afterRemainingPath));
+    console.log('nextPath: ',stringifyPath(nextPath));
+    console.log(getByArrayPath(tree, nextPath));
+    console.log('\n'); */
+    if (getByArrayPath(tree, nextPath) !== undefined) {
+      currentPath = nextPath;
+      updatePath();
+    } else {
+      console.log('not exist');
+    }
+  }
 }
 
-function updateFiles(files, properties) {
-  updateProperties(properties);
-  let filesB = document.getElementById('files');
-  filesB.innerHTML = '';
-  files.forEach(file => {
-    fileB = document.createElement('tr');
-    properties.forEach(property => {
-      propertyB = document.createElement('td');
-      propertyB.innerText = file[property];
-      propertyB.setAttribute('property', property);
-      fileB.appendChild(propertyB);
-    });
-    filesB.appendChild(fileB);
-  });
-
+function changePath(path) {
+  currentPath = pathPath('/');
+  goaldPath = pathPath(path);
+  updatePath();
 }
 
-function updateProperties(properties){
-  let propertiesB = document.getElementById('property');
-  propertiesB.innerHTML = '';
-  properties.forEach(property => {
-    propertyB = document.createElement('th');
-    propertyB.innerText = languageDictionary[language][property];
-    propertyB.setAttribute('property', property);
-    propertiesB.appendChild(propertyB);
-  });
+changePath('/2019_Info-Spe/projet 1/folder0.1')
+
+function pathPath(path) {
+  let out = path.split(RegExp('\\\\|/'));
+  for (let i = 0; i < out.length; i++) {
+    if (out[i] === '') {
+      out.splice(i, 1);
+      i--;
+    } else if (out[i] === '..') {
+      if (i !== 0) {
+        out.splice(i - 1, 2);
+        i -= 2;
+      } else {
+        out.shift();
+        i--;
+      }
+    }
+  }
+  return out;
 }
 
-function getFileslist(path){
-  socket.emit('fileList', path);
+function stringifyPath(path) {
+  let str = path.length === 0 ? '/' : '';
+  path.forEach(folder => {
+    str += '/' + folder
+  });
+  return str;
+}
 
-  return [
-    {name: "2017_1erS", type: "directory", size: 0},
-    {name: "2019_Info-Spe", type: "directory", size: 0},
-    {name: "2020_Info-Sup", type: "directory", size: 0},
-    {name: "2021_ING-1", type: "directory", size: 0},
-    {name: "2022_ING-2", type: "directory", size: 0},
-    {name: "2023_ING-3", type: "directory", size: 0},
-    {name: "index.txt", type: "file", size: 21},
-    {name: "index.html", type: "file", size: 264},
-    {name: path, type: "file", size: 264}
-  ];
+function sterilizePath(path) {
+  return stringifyPath(pathPath(path));
+}
+
+function getByArrayPath(object, path) {
+  if (typeof path == 'string') {
+    path = pathPath(path);
+  }
+  
+  let out = object;
+  if (out === undefined) {
+    return undefined;
+  } else {
+    for (let level = 0; level < path.length; level++) {
+      const folder = path[level];
+      if (out.hasOwnProperty(folder)) {
+        out = out[folder]; 
+      } else {
+        return undefined;
+      }
+    }
+    return out;
+  }
 }
