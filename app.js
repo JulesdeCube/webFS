@@ -16,16 +16,16 @@ app.use(express.static('./client'));
 
 
 io.of('/webFS').on('connection', function(socket){
-  socket.on('fileList', msg => {
-    getFilesList(msg, list => {
-      socket.emit('fileList', list)
+  socket.on('folderContent', msg => {
+    getFolderContent(msg, list => {
+      socket.emit('folderContent', list)
     });
     
   });
 });
 
 server.listen(port, function(){
-  console.log('listening on http://127.0.0.1:' + port);
+  console.log('listening on http://127.0.0.1:3000' + port);
 });
 
 
@@ -35,13 +35,13 @@ function pathSterilisateur(thepath) {
   return path.join(homeDirectory, thepath);
 }
 
-function getFilesList(directoryPath, callback) {
+function getFolderContent(directoryPath, callback) {
   realPath = pathSterilisateur(directoryPath);
   fs.exists(realPath, rsp => {
   console.log('thepath', directoryPath, '(',  realPath,') exist :',rsp);
     if (rsp) {
       fs.readdir(realPath, function (err, files) {
-        let result = [];
+        let result = {};
         if (err) {
           return console.log('Unable to scan directory: ' + err);
         }
@@ -60,7 +60,7 @@ function getFilesList(directoryPath, callback) {
             case fileStats.isSocket():          type = 'socket';          break;
             default: type = 'undefined'; break;
           }
-          result.push({name:file, type, size: fileStats.size});
+          result[file] = {name:file, type, size: fileStats.size, content: undefined};
         });
         callback({result, _metadata: {call:directoryPath, date: (new Date()).toISOString()}})
       });
