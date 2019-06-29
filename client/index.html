@@ -6,20 +6,20 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>WebFS</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="style.css">
   <script src="/socket.io/socket.io.js"></script>
   <script src="index.js"></script>
 </head>
 <body>
   <header>
-    <input type="text" id="path" value="\">
+    <input type="text" id="path" placeholder="/">
   </header>
   <main>
-    <table>
-      <thead>
-        <tr id="property"></tr>
-      </thead>
-      <tbody id="files"></tbody>
-    </table>
+    <header id="property">
+    </header>
+    <main id="files">
+      <div id="/">/</div>
+    </main>
   </main>
 </body>
 </html>
