@@ -1,116 +1,131 @@
 var socket = io('/webFS');
-var goaldPath = pathPath('/');
-var currentPath = pathPath('');
+
+
+
+// path function
+var Path = {
+  path(path) {
+    let out = path.split(RegExp('\\\\|/'));
+    for (let i = 0; i < out.length; i++) {
+      if (out[i] === '') {
+        out.splice(i, 1);
+        i--;
+      } else if (out[i] === '..') {
+        if (i !== 0) {
+          out.splice(i - 1, 2);
+          i -= 2;
+        } else {
+          out.shift();
+          i--;
+        }
+      }
+    }
+    return out;
+  },
+  stringify(path) {
+    let str = path.length === 0 ? '/' : '';
+    path.forEach(folder => {
+      str += '/' + folder
+    });
+    return str;
+  },
+  sterilize(path) {
+    out = typeof path === 'string' ? Path.path(path) : path;
+    return Path.stringify(out);
+  },
+  getFistParent(path1, path2) {
+    path1 = Path.path(Path.sterilize(path1));
+    path2 = Path.path(Path.sterilize(path2));
+    
+    if (path1.length < path2.length) {
+      let tmp = path1;
+      path1 = path2;
+      path2 = tmp;
+    }
+    for (let i = 0; i < path1.length; i++) {
+      if (path1[i] !== path2[i]) {
+        
+      }
+    }
+  }
+}
+
+
+
+var goaldPath = Path.path('/');
+var currentPath = Path.path('');
 
 var tree = {name:'/', type:'root', content:undefined};
 
 window.addEventListener('load', event => {
   pathB = document.getElementById('path');
   pathB.addEventListener('change', event => {
-    console.log(pathB);
-    
-    changePath(pathB.value)
+    CD(pathB.value);
   });
-});
+  CD(pathB.value);
 
-socket.on('folderContent', list => {
-/*   console.log('get path: ',list._metadata.call,list.result);
-  console.log('\n'); */
-  getByPath(list._metadata.call).content = list.result;
-  for (const name in list.result) {
-    if (list.result.hasOwnProperty(name)) {
-      addElement(list.result[name], list._metadata.call);
-    }
-  }
-  updatePath(); 
-});
-
-
-// path function
-function pathPath(path) {
-  let out = path.split(RegExp('\\\\|/'));
-  for (let i = 0; i < out.length; i++) {
-    if (out[i] === '') {
-      out.splice(i, 1);
-      i--;
-    } else if (out[i] === '..') {
-      if (i !== 0) {
-        out.splice(i - 1, 2);
-        i -= 2;
-      } else {
-        out.shift();
-        i--;
+  socket.on('folderContent', list => {
+    /*   console.log('get path: ',list._metadata.call,list.result);
+    console.log('\n'); */
+    getByPath(list._metadata.call).content = list.result;
+    for (const name in list.result) {
+      if (list.result.hasOwnProperty(name)) {
+        addElement(list.result[name], list._metadata.call);
       }
     }
-  }
-  return out;
-}
-
-function stringifyPath(path) {
-  let str = path.length === 0 ? '/' : '';
-  path.forEach(folder => {
-    str += '/' + folder
+    updateCD();
   });
-  return str;
-}
+  
 
-function sterilizePath(path) {
-  out = typeof path === 'string' ? pathPath(path) : path;
-  return stringifyPath(out);
-}
+});
+
+
 
 function goPath(path, relative) {
-  let out = pathPath(path);
+  let out = Path.path(path);
   out.push(relative);
-  return stringifyPath(out);
+  return Path.stringify(out);
 }
 
 
 
 // navigate function
 function getByPath(path) {
-  path = sterilizePath(path);
+  path = Path.sterilize(path);
   if (typeof path == 'string') {
-    path = pathPath(path);
+    path = Path.path(path);
   }
-  
-  
-  if (out.content === undefined) {
-    return {undefined};
-  } else {
-    let out = tree;
-    for (let level = 0; level < path.length; level++) {
-      const folder = path[level];
-      /* console.log(`folder:(level ${level}): ${folder} -> `, out.content); */
-      if (out.content.hasOwnProperty(folder)) {
-        out = out.content[folder]; 
-      } else {
-        return undefined;
-      }
+  let out = tree;
+  for (let level = 0; level < path.length; level++) {
+    const folder = path[level];
+    /* console.log(`folder:(level ${level}): ${folder} -> `, out.content); */
+    if (out.content.hasOwnProperty(folder)) {
+      out = out.content[folder]; 
+    } else {
+      return undefined;
     }
-    return out;
   }
+  return out;
 }
 
-function changePath(path) {
-  currentPath = pathPath('/');
-  goaldPath = pathPath(path);
+function CD(path) {
+  currentPath = Path.path('/');
+  goaldPath = Path.path(path);
 /*   console.log('goald path: ',sterilizePath(path));
   console.log(''); */
-  updatePath();
+  updateCD();
 }
-
-function updatePath() {
+function updateCD() {
   if (getByPath(goaldPath).content === undefined) {
     let level = currentPath.length;
     let afterRemainingPath = [...goaldPath];
     let nextPath = afterRemainingPath.splice(0, level + 1);
-/*     console.log('curentpath: ',stringifyPath(currentPath), getByPath(currentPath));
+    /*console.log('curentpath: ',stringifyPath(currentPath), getByPath(currentPath));
     console.log('nextPath: ',stringifyPath(nextPath));
     console.log('\n'); */
     if (getByPath(currentPath).content !== undefined) {
       currentPath = nextPath;
-      updatePath();
+      updateCD();
     } else {
       askForFolderContent(currentPath);
     }
@@ -120,7 +135,7 @@ function updatePath() {
 function askForFolderContent(path) {
 /*   console.log('ask for: ', sterilizePath(path));
   console.log('\n'); */
-  socket.emit('folderContent', sterilizePath(path));
+  socket.emit('folderContent', Path.sterilize(path));
 }
 
 
@@ -145,12 +160,18 @@ function addElement(element, parent) {
   if (!isElement(parent)) {
     parent = document.getElementById(parent);
   }
-  console.log(parent);
-  
   directoryB = document.createElement('div');
   directoryB.id = goPath(parent.id, element.name);
   directoryB.innerText = element.name;
+  directoryB.addEventListener('dblclick',event => {
+    CD(event.originalTarget.id);
+    event.stopPropagation();
+  });
+
 
   parent.appendChild(directoryB);
+}
 
+function getSubType(element) {
+  name = '.';
 }

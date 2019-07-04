@@ -1,0 +1,7 @@
+{
+  "vscode": {"type":"folder", "regExp":"^.vscode$", "src": "folder-vscode"},
+  "html": {
+    "folder":{"regExp":"^.html$", "src": "html"},
+    "file":{"regExp":"^html$", "src": "folder-vscode.svg"}
+  }
+}  
